@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monthly Attendance</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f5f7fa; font-family: Arial, sans-serif; }
+    .container { margin-top: 40px; position: relative; }
+    h2 { text-align: center; margin-bottom: 20px; color: #0d6efd; }
+    .date-row { cursor: pointer; margin-bottom: 5px; padding: 10px; background: #fff; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .date-row:hover { background: #e8f0fe; }
+    .present-count { font-weight: bold; color: #198754; }
+    .absent-count { font-weight: bold; color: #dc3545; }
+    .table-container { margin-bottom: 20px; display: none; }
+    .top-button { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Monthly Attendance</h2>
+
+  <!-- Button to open attendance sheet -->
+  <button class="btn btn-primary top-button" onclick="openAttendance()">Open Attendance Sheet</button>
+
+  <div id="attendanceContainer"></div>
+</div>
+
+<script>
+function openAttendance() {
+  window.open('student.html', '_blank');
+}
+
+const container = document.getElementById('attendanceContainer');
+const allAttendance = JSON.parse(localStorage.getItem('attendance') || '{}');
+
+// Get current month
+const now = new Date();
+const month = now.getMonth();
+const year = now.getFullYear();
+
+// Filter dates of current month
+const monthDates = Object.keys(allAttendance).filter(date => {
+  const d = new Date(date);
+  return d.getMonth() === month && d.getFullYear() === year;
+}).sort();
+
+if (monthDates.length === 0) {
+  container.innerHTML = '<p class="text-center">No attendance data for this month.</p>';
+}
+
+// For each date, show summary
+monthDates.forEach(date => {
+  const data = allAttendance[date];
+  const presentCount = data.filter(s => s.present).length;
+  const absentCount = data.length - presentCount;
+
+  // Create date row
+  const dateDiv = document.createElement('div');
+  dateDiv.className = 'date-row';
+  dateDiv.innerHTML = `<strong>${date}</strong> | <span class="present-count">Present: ${presentCount}</span> | <span class="absent-count">Absent: ${absentCount}</span>`;
+  container.appendChild(dateDiv);
+
+  // Create hidden table
+  const tableContainer = document.createElement('div');
+  tableContainer.className = 'table-container';
+  const table = document.createElement('table');
+  table.className = 'table table-bordered table-hover mt-2';
+  const thead = document.createElement('thead');
+  thead.innerHTML = `
+    <tr class="table-dark">
+      <th>#</th>
+      <th>Name</th>
+      <th>Number</th>
+      <th>City</th>
+      <th>Roll No.</th>
+      <th>Attendance</th>
+    </tr>
+  `;
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  data.forEach((student, index) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${student.name}</td>
+      <td>${student.number}</td>
+      <td>${student.city || 'Unknown'}</td>
+      <td>${student.rollNo || 'N/A'}</td>
+      <td>${student.present ? 'Present' : 'Absent'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  tableContainer.appendChild(table);
+  container.appendChild(tableContainer);
+
+  // Toggle table on click
+  dateDiv.addEventListener('click', () => {
+    tableContainer.style.display = tableContainer.style.display === 'none' ? 'block' : 'none';
+  });
+});
+</script>
+
+</body>
+</html>
